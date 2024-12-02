@@ -1,16 +1,19 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import * as XLSX from 'xlsx';
 import { Product } from '../models/product.model';
 
 export default function UploadExcelFile() {
   const [file, setFile] = useState<File | null>(null);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [jsonData, setJsonData] = useState<Product[]>([]);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = event.target.files?.[0];
-    if (selectedFile && selectedFile.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') {
+    if (
+      selectedFile &&
+      selectedFile.type ===
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    ) {
       setFile(selectedFile);
     } else {
       alert('Please upload a valid Excel file.');
@@ -18,22 +21,47 @@ export default function UploadExcelFile() {
   };
 
   const handleUpload = () => {
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const data = new Uint8Array(event.target?.result as ArrayBuffer);
-        const workbook = XLSX.read(data, { type: 'array' });
-        const sheetName = workbook.SheetNames[0];
-        const worksheet = workbook.Sheets[sheetName];
-        const json = XLSX.utils.sheet_to_json(worksheet);
-        setJsonData(json as Product[]);
-
-        console.log(json);
-        alert('Upload successful.');
-      };
-      reader.readAsArrayBuffer(file);
-    } else {
+    if (!file) {
       alert('No file selected.');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const data = new Uint8Array(event.target?.result as ArrayBuffer);
+      const workbook = XLSX.read(data, { type: 'array' });
+      const sheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[sheetName];
+      const json = XLSX.utils.sheet_to_json(worksheet);
+      setJsonData(json as Product[]);
+
+      console.log(json);
+    };
+    reader.readAsArrayBuffer(file);
+  };
+
+  useEffect(() => {
+    if (jsonData.length > 0) {
+      saveUploadedData(jsonData);
+    }
+  }, [jsonData]);
+
+  const saveUploadedData = async (jsonData: Product[]) => {
+    const response = await fetch('/api/files-upload', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(jsonData),
+    });
+
+    const data = await response.json();
+    console.log(data)
+
+    if (response.ok) {
+      alert('Upload successful.');
+    } else {
+      alert(`Failed to Upload: ${data.message}`);
     }
   };
 
