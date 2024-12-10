@@ -1,10 +1,10 @@
-import dbConnect from '@/app/libs/mongoose';
+// import dbConnect from '@/app/libs/mongoose';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(request: NextRequest) {
   const requestJson = await request.json();
   const products = JSON.parse(requestJson);
-  const productsModelModified: Product[] = products.map((product: any) => ({
+  /* const productsModelModified: Product[] = products.map((product: any) => ({
     name: product.name,
     price: product.price,
     imageUrls: product.imageUrls,
@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
     discountPercentage: product.discountPercentage,
     rate: product.rate,
     categoryId: product.categoryId,
-  }));
+  })); */
   console.log('products: ', products);
 
   try {
@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       message: 'Products processed successfully',
-      result,
+      products,
     });
   } catch (error) {
     console.error(error);
